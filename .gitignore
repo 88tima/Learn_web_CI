@@ -1,0 +1,5 @@
+*.txt
+venv/
+*.png
+*.docx
+*.md
