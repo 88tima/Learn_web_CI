@@ -19,7 +19,7 @@ app = Flask(__name__)
 
 # --- Метрики Prometheus ---
 # Счётчик обработанных запросов (бизнес-метрика)
-REQUEST_COUNT = Counter('flask_request_count', 'Total number of requests processed')
+REQUEST_COUNT = Counter('flask_request_count_total', 'Total number of requests processed')
 
 # Счётчик успешных/неудачных преобразований
 TRANSFORM_SUCCESS = Counter('flask_transform_success', 'Number of successful transformations')
@@ -241,3 +241,4 @@ def index():
 if __name__ == "__main__":
     # Запускаем сервер
     app.run(host='0.0.0.0', port=5000, debug=True)
+
