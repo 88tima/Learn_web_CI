@@ -10,4 +10,5 @@ RUN mkdir -p /var/log/app
 
 EXPOSE 5000
 
-CMD ["python", "app.py"]
+# Перенаправляем stdout/stderr в файл через tee
+CMD ["sh", "-c", "python app.py 2>&1 | tee -a /var/log/app/app.log"]
