@@ -5,10 +5,11 @@ WORKDIR /app
 COPY app.py .
 RUN pip install flask prometheus_client psutil
 
-# Создаём файл лога заранее (чтобы Promtail мог его отслеживать)
-RUN touch /app/app.log
+# Создаём директорию для логов
+RUN mkdir -p /var/log/app
 
 EXPOSE 5000
 
-CMD ["sh", "-c", "python app.py 2>&1 | tee -a /app/app.log"]
+# Пишем логи в файл И stdout
+CMD ["sh", "-c", "python app.py 2>&1 | tee -a /var/log/app/app.log"]
 
