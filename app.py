@@ -9,7 +9,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler("app.log"),  # Логи будут писаться в файл app.log
+        logging.FileHandler("/var/log/app/app.log"),  # Логи будут писаться в файл app.log
         logging.StreamHandler()          # Также в консоль
     ]
 )
@@ -241,4 +241,5 @@ def index():
 if __name__ == "__main__":
     # Запускаем сервер
     app.run(host='0.0.0.0', port=5000, debug=True)
+
 
