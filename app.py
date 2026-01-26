@@ -2,55 +2,40 @@ from flask import Flask, request
 from prometheus_client import Counter, Gauge, generate_latest, CONTENT_TYPE_LATEST
 import psutil
 import logging
-import os
 
-# Настройка логирования
+# Настройка логирования ТОЛЬКО в stdout (файл будет записываться через tee)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler("/var/log/app/app.log"),  # Логи будут писаться в файл app.log
-        logging.StreamHandler()          # Также в консоль
-    ]
+    handlers=[logging.StreamHandler()]  # ← только консоль
 )
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
 # --- Метрики Prometheus ---
-# Счётчик обработанных запросов (бизнес-метрика)
 REQUEST_COUNT = Counter('flask_request_count_total', 'Total number of requests processed')
-
-# Счётчик успешных/неудачных преобразований
 TRANSFORM_SUCCESS = Counter('flask_transform_success', 'Number of successful transformations')
 TRANSFORM_FAILED = Counter('flask_transform_failed', 'Number of failed transformations')
-
-# Гейджи для системных метрик
 CPU_USAGE = Gauge('system_cpu_percent', 'Current CPU usage percent')
 RAM_USAGE = Gauge('system_memory_percent', 'Current RAM usage percent')
 DISK_USAGE = Gauge('system_disk_percent', 'Current disk usage percent')
-
-# Healthcheck метрика (1 = healthy, 0 = unhealthy)
 HEALTHCHECK = Gauge('application_health', 'Application health status')
 
-# --- Функция для обновления системных метрик ---
 def update_system_metrics():
     CPU_USAGE.set(psutil.cpu_percent())
     RAM_USAGE.set(psutil.virtual_memory().percent)
     DISK_USAGE.set(psutil.disk_usage('/').percent)
 
-# --- Эндпоинт для метрик Prometheus ---
 @app.route('/metrics')
 def metrics():
-    update_system_metrics()  # Обновляем метрики перед отправкой
-    HEALTHCHECK.set(1)       # Приложение живо
+    update_system_metrics()
+    HEALTHCHECK.set(1)
     return generate_latest(), 200, {'Content-Type': CONTENT_TYPE_LATEST}
 
-# --- Эндпоинт для healthcheck ---
 @app.route('/health')
 def health():
     try:
-        # Простой healthcheck: если дошли сюда — приложение работает
         update_system_metrics()
         HEALTHCHECK.set(1)
         return "OK", 200
@@ -59,7 +44,6 @@ def health():
         logger.error(f"Healthcheck failed: {e}")
         return "ERROR", 500
 
-# --- Основной HTML шаблон ---
 html_page = """
 <!DOCTYPE html>
 <html>
@@ -196,28 +180,16 @@ def index():
     result = ""
     mode = "upper"
     theme = request.values.get("theme", "light")
+    
     if theme == "light":
-        colors = {
-            "bg_color": "#f2f4f7",
-            "text_color": "#000",
-            "container_bg": "#fff",
-            "input_bg": "#fafafa"
-        }
+        colors = {"bg_color": "#f2f4f7", "text_color": "#000", "container_bg": "#fff", "input_bg": "#fafafa"}
     else:
-        colors = {
-            "bg_color": "#1e1e1e",
-            "text_color": "#eee",
-            "container_bg": "#2a2a2a",
-            "input_bg": "#333"
-        }
+        colors = {"bg_color": "#1e1e1e", "text_color": "#eee", "container_bg": "#2a2a2a", "input_bg": "#333"}
 
     if request.method == "POST":
         text = request.form.get("text", "")
         mode = request.form.get("mode", "upper")
-
-        # Инкрементируем счётчик запросов
         REQUEST_COUNT.inc()
-
         try:
             result = transform(text, mode)
             TRANSFORM_SUCCESS.inc()
@@ -239,7 +211,4 @@ def index():
     )
 
 if __name__ == "__main__":
-    # Запускаем сервер
     app.run(host='0.0.0.0', port=5000, debug=True)
-
-
