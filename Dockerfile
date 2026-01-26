@@ -10,4 +10,5 @@ RUN touch /app/app.log
 
 EXPOSE 5000
 
-CMD ["python", "app.py"]
+CMD ["sh", "-c", "python app.py 2>&1 | tee -a /app/app.log"]
+
